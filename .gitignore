@@ -14,3 +14,4 @@ build/
 
 # Streamlit
 .streamlit/
+.env
