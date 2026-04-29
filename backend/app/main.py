@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.routes import workers, webhooks, chat, tenants
+from app.api.routes import workers, webhooks, chat, tenants, conversations
 
 app = FastAPI(title="AI Workers Platform", version="0.1.0")
 
@@ -14,6 +14,7 @@ app.add_middleware(
 
 app.include_router(tenants.router, prefix="/api")
 app.include_router(workers.router, prefix="/api")
+app.include_router(conversations.router, prefix="/api")
 app.include_router(webhooks.router, prefix="/api")
 app.include_router(chat.router, prefix="/api")
 
