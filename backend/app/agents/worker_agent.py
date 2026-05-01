@@ -6,6 +6,7 @@ from typing import TypedDict, Annotated, Sequence
 import operator
 
 from app.tools import all_tools
+from app.tools.read_latest_email import AGENT_CONTEXT
 from app.core.config import settings
 
 # State definition — what the agent carries between steps
@@ -65,6 +66,8 @@ def tools_for_skills(skills: dict[str, bool]):
         enabled_tools.append(tool_by_name["take_note"])
     if skills.get("gmail_send") and "send_email" in tool_by_name:
         enabled_tools.append(tool_by_name["send_email"])
+    if skills.get("gmail_read") and "read_latest_email" in tool_by_name:
+        enabled_tools.append(tool_by_name["read_latest_email"])
 
     return enabled_tools
 
@@ -141,14 +144,18 @@ async def run_agent(
 
     history_messages.append(HumanMessage(content=user_message))
 
-    result = await worker_graph.ainvoke({
-        "messages": history_messages,
-        "worker_name": worker_name,
-        "worker_role": worker_role,
-        "business_context": business_context,
-        "tenant_id": tenant_id,
-        "worker_id": worker_id,
-        "user_id": user_id,
-    })
+    context_token = AGENT_CONTEXT.set({"tenant_id": tenant_id, "user_id": user_id})
+    try:
+        result = await worker_graph.ainvoke({
+            "messages": history_messages,
+            "worker_name": worker_name,
+            "worker_role": worker_role,
+            "business_context": business_context,
+            "tenant_id": tenant_id,
+            "worker_id": worker_id,
+            "user_id": user_id,
+        })
+    finally:
+        AGENT_CONTEXT.reset(context_token)
 
     return result["messages"][-1].content
