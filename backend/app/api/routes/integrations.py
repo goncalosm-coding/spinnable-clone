@@ -165,7 +165,11 @@ async def google_callback(
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
         if token_response.status_code >= 400:
-            raise HTTPException(status_code=400, detail="Failed exchanging OAuth code for token.")
+            google_error = token_response.text
+            raise HTTPException(
+                status_code=400,
+                detail=f"Failed exchanging OAuth code for token: {google_error}",
+            )
         token_data = token_response.json()
 
         access_token = token_data.get("access_token")
