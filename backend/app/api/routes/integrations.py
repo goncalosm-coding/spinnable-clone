@@ -20,6 +20,7 @@ class GoogleAuthorizeRequest(BaseModel):
     tenant_id: str
     user_id: str
     permissions: list[str]
+    post_auth_redirect: str | None = None
 
 
 class GoogleAuthorizeResponse(BaseModel):
@@ -92,6 +93,10 @@ def _resolve_permissions_from_scopes(scopes: list[str]) -> list[str]:
     return sorted(permissions)
 
 
+def _is_allowed_redirect(url: str) -> bool:
+    return url.startswith("http://") or url.startswith("https://")
+
+
 @router.post("/google/authorize", response_model=GoogleAuthorizeResponse)
 async def authorize_google(req: GoogleAuthorizeRequest):
     if (
@@ -115,6 +120,7 @@ async def authorize_google(req: GoogleAuthorizeRequest):
             "worker_id": req.worker_id,
             "user_id": req.user_id,
             "permissions": unique_permissions,
+            "post_auth_redirect": req.post_auth_redirect,
             "iat": int(datetime.now(timezone.utc).timestamp()),
         }
     )
@@ -218,7 +224,19 @@ async def google_callback(
         on_conflict="tenant_id,user_id,provider",
     ).execute()
 
-    if settings.GOOGLE_POST_AUTH_REDIRECT:
+    post_auth_redirect = state_payload.get("post_auth_redirect")
+    if isinstance(post_auth_redirect, str) and _is_allowed_redirect(post_auth_redirect):
+        query = urlencode(
+            {
+                "oauth": "success",
+                "provider": "google",
+                "worker_id": state_payload["worker_id"],
+            }
+        )
+        separator = "&" if "?" in post_auth_redirect else "?"
+        return RedirectResponse(f"{post_auth_redirect}{separator}{query}")
+
+    if settings.GOOGLE_POST_AUTH_REDIRECT and _is_allowed_redirect(settings.GOOGLE_POST_AUTH_REDIRECT):
         query = urlencode(
             {
                 "oauth": "success",

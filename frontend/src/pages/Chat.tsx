@@ -131,6 +131,8 @@ export default function Chat() {
       ? (error as { response: { data: { detail: string } } }).response.data.detail
       : "Could not start authorization flow.";
 
+  const postAuthRedirect = `${window.location.origin}/chat/${workerId ?? ""}`;
+
   const activateAllRecommended = async () => {
     const googlePermissions = requiredSkills
       .map((skill) => skill.key)
@@ -144,6 +146,7 @@ export default function Chat() {
           tenant_id: TENANT_ID,
           user_id: sessionUserId,
           permissions: googlePermissions,
+          post_auth_redirect: postAuthRedirect,
         });
         const popup = window.open(response.data.authorization_url, "_blank", "noopener,noreferrer");
         if (!popup) {
@@ -168,6 +171,7 @@ export default function Chat() {
         tenant_id: TENANT_ID,
         user_id: sessionUserId,
         permissions: [permission],
+        post_auth_redirect: postAuthRedirect,
       });
       const popup = window.open(response.data.authorization_url, "_blank", "noopener,noreferrer");
       if (!popup) {
