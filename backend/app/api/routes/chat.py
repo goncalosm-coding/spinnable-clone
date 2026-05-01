@@ -8,6 +8,7 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 class ChatRequest(BaseModel):
     worker_id: str
     tenant_id: str
+    user_id: str
     message: str
     conversation_id: str | None = None
 
@@ -56,6 +57,7 @@ async def chat(req: ChatRequest):
         business_context=business_context,
         tenant_id=req.tenant_id,
         worker_id=req.worker_id,
+        user_id=req.user_id,
     )
 
     # Save messages

@@ -69,6 +69,7 @@ async def whatsapp_webhook(request: Request):
         business_context=business_context,
         tenant_id=str(conversation["tenant_id"]),
         worker_id=str(worker["id"]),
+        user_id=phone_number,
     )
 
     logger.info(f"Agent reply: {reply}")
